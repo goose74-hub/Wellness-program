@@ -1,0 +1,8 @@
+{
+  "name": "Wellness Program Test",
+  "short_name": "Wellness",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fafbfd",
+  "theme_color": "#1f6feb"
+}

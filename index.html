@@ -1,0 +1,90 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Wellness Test</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial;margin:0;background:#f5f7fa;color:#182033}.app{max-width:430px;margin:auto;padding:16px 16px 90px}.card{background:white;border:1px solid #e5eaf0;border-radius:16px;padding:14px;margin:10px 0}.row{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #eee}.row:last-child{border:0}.btn{width:100%;padding:13px;border:0;border-radius:12px;background:#1f6feb;color:white;font-weight:700}.btn2{background:#eef4ff;color:#1f6feb}.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{padding:8px 10px;border:1px solid #d9e1ea;background:#fff;border-radius:999px}input,textarea,select{width:100%;padding:10px;margin:5px 0 10px;border:1px solid #d9e1ea;border-radius:10px;box-sizing:border-box}.screen{display:none}.screen.active{display:block}.nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(430px,100%);display:grid;grid-template-columns:repeat(5,1fr);background:white;border-top:1px solid #ddd}.nav button{border:0;background:white;padding:10px 2px;font-size:11px}.tag{font-size:11px;padding:5px 8px;border-radius:999px;background:#eef4ff;color:#1f6feb}.warn{background:#fff7e8;padding:10px;border-radius:10px;font-size:12px}.small{font-size:12px;color:#6f7a8a}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{font-size:24px;font-weight:700}.green{color:#16894b}.red{color:#c83c3c}table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:7px;border-bottom:1px solid #eee}</style></head>
+<body><div class="app"><h2 id="title">Wellness Program</h2><div id="sub" class="small">Clean test build</div>
+
+<section id="login" class="screen active">
+<div class="card"><h3>Member</h3><p class="small">Start from onboarding with dummy/test data.</p><button class="btn" onclick="memberEntry()">Enter as Member</button></div>
+<div class="card"><h3>Coach</h3><p class="small">View client alerts, cycles and supplement follow-up.</p><button class="btn btn2" onclick="coachEntry()">Enter as Coach</button></div>
+<div class="warn">Prototype only. No real authentication yet. Use test data only.</div>
+</section>
+
+<section id="onboard" class="screen">
+<h3>New Member Onboarding</h3>
+<div class="card">
+<input id="name" placeholder="Test member name"><input id="coach" placeholder="Test coach name">
+<select id="personality"><option value="">Personality</option><option>Phlegmatic</option><option>Sanguine</option><option>Melancholic</option><option>Choleric</option></select>
+<label>Start date</label><input id="start" type="date"><input id="startWeight" type="number" step=".1" placeholder="Start weight kg"><input id="sixGoal" type="number" step=".1" placeholder="6-week goal loss kg"><input id="ultimate" type="number" step=".1" placeholder="Ultimate goal weight kg">
+</div>
+<h3>Supplements</h3>
+<div class="card"><input id="suppName" placeholder="Supplement name"><input id="suppStart" type="date"><input id="suppNote" placeholder="Coach note / focus"><button class="btn btn2" onclick="addSupp()">+ Add supplement</button><div id="suppDraft"></div></div>
+<button class="btn" onclick="finishOnboard()">Create Member</button>
+</section>
+
+<section id="home" class="screen">
+<div class="card"><div class="row"><div><div class="small">Program position</div><div class="metric" id="position"></div></div><span class="tag" id="proteinTag">PROTEIN DAY</span></div></div>
+<div class="grid">
+<div class="card"><div class="small">Weight</div><div class="metric" id="wHome">—</div></div>
+<div class="card"><div class="small">B4B</div><div class="metric" id="bHome">0</div><div class="small">/ 5,000 before breakfast</div></div>
+<div class="card"><div class="small">Water</div><div class="metric" id="waterHome">0.0 L</div></div>
+<div class="card"><div class="small">Carbs</div><div class="metric" id="carbHome">0 g</div></div>
+<div class="card"><div class="small">Protein</div><div class="metric" id="proteinHome">0 g</div></div>
+</div><button class="btn" onclick="showMember('checkin')">Open Check-in</button>
+</section>
+
+<section id="checkin" class="screen">
+<div class="card"><input id="weight" type="number" step=".1" placeholder="Weight kg"><input id="sleep" type="number" step=".1" placeholder="Sleep hours"><button class="btn btn2" onclick="saveMorning()">Save morning</button></div>
+<h3>B4B</h3><div class="card"><div class="metric" id="bCheck">0 / 5,000</div><div class="chips"><button class="chip" onclick="addSteps(1000)">+1000</button><button class="chip" onclick="addSteps(2500)">+2500</button><button class="chip" onclick="set5000()">Set 5000</button></div><button class="btn btn2" style="margin-top:10px" onclick="breakfast()">Mark breakfast started</button></div>
+<h3>Water</h3><div class="card"><div class="metric" id="waterCheck">0.0 L</div><div class="chips"><button class="chip" onclick="addWater(.25)">+250 ml</button><button class="chip" onclick="addWater(.5)">+500 ml</button><button class="chip" onclick="addWater(1)">+1 L</button></div></div>
+<h3>Food & Snacks</h3><div class="card"><div class="chips"><button class="chip" onclick="qfood('Protein shake',8,25)">Protein shake</button><button class="chip" onclick="qfood('Eggs',1,18)">Eggs</button></div><input id="food" placeholder="Food/snack"><input id="carbs" type="number" placeholder="Carbs g"><input id="protein" type="number" placeholder="Protein g"><button class="btn btn2" onclick="addFood()">+ Add</button><div id="foods"></div></div>
+<h3>Daily actions</h3><div class="card"><div class="row"><span>Supplements</span><button class="chip" onclick="toggle('supp')" id="suppBtn">Not yet</button></div><div class="row"><span>Daily video</span><button class="chip" onclick="toggle('video')" id="videoBtn">Not yet</button></div><div class="row"><span>Daily audio</span><button class="chip" onclick="toggle('audio')" id="audioBtn">Not yet</button></div></div>
+<div class="card"><textarea id="nsv" placeholder="NSV"></textarea><textarea id="coachNote" placeholder="Notes to coach"></textarea><button class="btn" onclick="complete()">Complete check-in</button></div>
+</section>
+
+<section id="progress" class="screen"><div class="card"><div class="metric" id="progPos"></div><div class="small" id="progType"></div></div><div class="card"><table><thead><tr><th>Day</th><th>Date</th><th>Type</th></tr></thead><tbody id="cycleTable"></tbody></table></div></section>
+
+<section id="profile" class="screen"><div class="card" id="profileCard"></div><h3>Supplements</h3><div class="card" id="profileSupp"></div></section>
+<section id="squad" class="screen"><div class="card">Shared NSVs, milestones and B4B streaks will appear here.</div></section>
+
+<section id="coachHome" class="screen"><div class="grid"><div class="card"><div class="small">Clients</div><div class="metric" id="clientCount">0</div></div><div class="card"><div class="small">Needs attention</div><div class="metric" id="attention">0</div></div></div><h3>Alerts</h3><div class="card" id="alerts"></div><h3>Clients</h3><div class="card" id="clients"></div></section>
+
+<section id="coachClient" class="screen"><div class="card"><div class="metric" id="cname"></div><div class="small" id="cpos"></div></div><h3>Today</h3><div class="grid"><div class="card"><div class="small">B4B</div><b id="cb4b"></b></div><div class="card"><div class="small">Water</div><b id="cwater"></b></div><div class="card"><div class="small">Carbs</div><b id="ccarb"></b></div><div class="card"><div class="small">Protein</div><b id="cprot"></b></div></div><h3>Supplements</h3><div class="card" id="csupp"></div><h3>Notes</h3><div class="card"><p id="cnote"></p><textarea id="privateNote" placeholder="Private coach follow-up note"></textarea><button class="btn btn2" onclick="savePrivate()">Save coach note</button></div></section>
+</div>
+
+<nav id="memberNav" class="nav" style="display:none"><button onclick="showMember('home')">Home</button><button onclick="showMember('checkin')">Check-in</button><button onclick="showMember('progress')">Progress</button><button onclick="showMember('squad')">Squad</button><button onclick="showMember('profile')">Profile</button></nav>
+<nav id="coachNav" class="nav" style="display:none"><button onclick="showCoach('coachHome')">Dashboard</button><button onclick="openClient()">Client</button><button onclick="alert('Messages placeholder')">Messages</button><button onclick="alert('Reports placeholder')">Reports</button><button onclick="showCoach('coachHome')">Settings</button></nav>
+
+<script>
+const D={member:null,supplements:[],weight:null,sleep:null,water:0,steps:0,breakfast:false,breakfastSteps:null,foods:[],supp:false,video:false,audio:false,done:false,privateNote:''};
+let s=Object.assign({},D,JSON.parse(localStorage.getItem('cleanWellness')||'{}')),draft=[];
+function save(){localStorage.setItem('cleanWellness',JSON.stringify(s))}
+function hide(){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'))}
+function memberEntry(){if(s.member)showMember('home');else{hide();onboard.classList.add('active');title.textContent='Onboarding'}}
+function coachEntry(){showCoach('coachHome')}
+function showMember(id){hide();document.getElementById(id).classList.add('active');memberNav.style.display='grid';coachNav.style.display='none';title.textContent=id==='home'?'Member Home':id[0].toUpperCase()+id.slice(1);sub.textContent=s.member?posText():'Member';sync()}
+function showCoach(id){hide();document.getElementById(id).classList.add('active');memberNav.style.display='none';coachNav.style.display='grid';title.textContent=id==='coachHome'?'Coach Dashboard':'Client';sub.textContent='Coach-only test view';renderCoach()}
+function addSupp(){if(!suppName.value.trim())return;draft.push({name:suppName.value.trim(),start:suppStart.value,note:suppNote.value.trim(),follow:''});suppName.value='';suppStart.value='';suppNote.value='';renderDraft()}
+function renderDraft(){suppDraft.innerHTML=draft.map(x=>'<div class="row"><b>'+x.name+'</b><span class="small">'+(x.start||'')+'</span></div>').join('')}
+function finishOnboard(){let sw=parseFloat(startWeight.value),ug=parseFloat(ultimate.value);if(!start.value||isNaN(sw)||isNaN(ug))return alert('Add start date, start weight and ultimate goal');s.member={name:name.value.trim()||'Test Member',coach:coach.value.trim()||'Test Coach',personality:personality.value,start:start.value,startWeight:sw,sixGoal:parseFloat(sixGoal.value)||null,ultimate:ug};s.weight=sw;s.supplements=draft.slice();save();showMember('home')}
+function ds(){let a=new Date(s.member.start+'T00:00:00'),b=new Date();b.setHours(0,0,0,0);return Math.max(0,Math.floor((b-a)/86400000))}
+function info(){let d=ds(),cycle=Math.floor(d/42)+1,day=d%42+1,date=new Date(new Date(s.member.start+'T00:00:00').getTime()+d*86400000);return{cycle,day,date}}
+function proteinDay(day,date){return day<=3||date.getDay()===1}
+function posText(){let i=info();return'Cycle '+i.cycle+' · Day '+i.day}
+function saveMorning(){let w=parseFloat(weight.value),sl=parseFloat(sleep.value);if(!isNaN(w))s.weight=w;if(!isNaN(sl))s.sleep=sl;save();sync()}
+function addSteps(x){if(s.breakfast)return;s.steps+=x;save();sync()} function set5000(){if(!s.breakfast){s.steps=5000;save();sync()}}
+function breakfast(){if(s.breakfast)return;s.breakfast=true;s.breakfastSteps=s.steps;save();sync()}
+function addWater(x){s.water=+(s.water+x).toFixed(2);save();sync()}
+function qfood(n,c,p){s.foods.push({n,c,p});save();sync()}
+function addFood(){if(!food.value.trim())return;s.foods.push({n:food.value.trim(),c:+carbs.value||0,p:+protein.value||0});food.value='';carbs.value='';protein.value='';save();sync()}
+function toggle(k){s[k]=!s[k];save();sync()}
+function complete(){s.done=true;localStorage.setItem('cleanNote',coachNote.value);localStorage.setItem('cleanNSV',nsv.value);save();showMember('home')}
+function totals(){return s.foods.reduce((a,x)=>({c:a.c+x.c,p:a.p+x.p}),{c:0,p:0})}
+function renderCycle(){let i=info(),st=new Date(s.member.start+'T00:00:00');cycleTable.innerHTML=Array.from({length:42},(_,k)=>{let d=k+1,dt=new Date(st.getTime()+((i.cycle-1)*42+k)*86400000);return'<tr><td>'+d+'</td><td>'+dt.toLocaleDateString('en-AU',{day:'2-digit',month:'short'})+'</td><td>'+(proteinDay(d,dt)?'🅿️ Protein':'Regular')+'</td></tr>'}).join('')}
+function renderProfile(){profileCard.innerHTML='<div class="row"><span>Name</span><b>'+s.member.name+'</b></div><div class="row"><span>Coach</span><b>'+s.member.coach+'</b></div><div class="row"><span>Personality</span><b>'+(s.member.personality||'—')+'</b></div><div class="row"><span>Start</span><b>'+s.member.start+'</b></div>';profileSupp.innerHTML=s.supplements.length?s.supplements.map(x=>'<div class="row"><b>'+x.name+'</b><span class="small">Started '+(x.start||'—')+'</span></div>').join(''):'No supplements'}
+function renderCoach(){clientCount.textContent=s.member?1:0;let note=localStorage.getItem('cleanNote')||'',a=[];if(s.member){if(note)a.push('New note to coach');if(s.breakfast&&s.breakfastSteps<5000)a.push('B4B incomplete');if(!s.done)a.push('Check-in incomplete')}attention.textContent=a.length?1:0;alerts.innerHTML=a.length?a.map(x=>'<div class="row"><span>'+x+'</span><span class="tag">CHECK</span></div>').join(''):'No alerts';clients.innerHTML=s.member?'<div class="row" onclick="openClient()"><div><b>'+s.member.name+'</b><div class="small">'+posText()+'</div></div><span class="tag">'+(a.length?'CHECK':'ON TRACK')+'</span></div>':'No clients yet'}
+function openClient(){if(!s.member)return alert('Create a test member first');showCoach('coachClient');let i=info(),t=totals();cname.textContent=s.member.name;cpos.textContent=posText()+(proteinDay(i.day,i.date)?' · Protein day':'');cb4b.textContent=s.breakfast?(s.breakfastSteps>=5000?'Complete ✓':'Incomplete'):'Pending';cwater.textContent=s.water.toFixed(1)+' L';ccarb.textContent=t.c+' g';cprot.textContent=t.p+' g';cnote.textContent=localStorage.getItem('cleanNote')||'No note yet';privateNote.value=s.privateNote||'';csupp.innerHTML=s.supplements.length?s.supplements.map((x,i)=>'<div class="row"><div><b>'+x.name+'</b><div class="small">Started '+(x.start||'—')+(x.note?' · '+x.note:'')+'</div></div><button class="chip" onclick="follow('+i+')">Follow up</button></div>').join(''):'No supplements'}
+function follow(i){s.supplements[i].follow=new Date().toLocaleDateString('en-AU');save();alert('Follow-up marked')}
+function savePrivate(){s.privateNote=privateNote.value;save();alert('Coach note saved')}
+function sync(){if(!s.member)return;let i=info(),t=totals(),steps=s.breakfast?s.breakfastSteps:s.steps;position.textContent=posText();proteinTag.style.display=proteinDay(i.day,i.date)?'inline-flex':'none';wHome.textContent=s.weight?s.weight+' kg':'—';bHome.textContent=steps.toLocaleString();waterHome.textContent=s.water.toFixed(1)+' L';waterCheck.textContent=s.water.toFixed(1)+' L';carbHome.textContent=t.c+' g';proteinHome.textContent=t.p+' g';bCheck.textContent=steps.toLocaleString()+' / 5,000';foods.innerHTML=s.foods.length?s.foods.map(x=>'<div class="row"><span>'+x.n+'</span><span class="small">'+x.c+'c · '+x.p+'p</span></div>').join(''):'No food logged';suppBtn.textContent=s.supp?'Done ✓':'Not yet';videoBtn.textContent=s.video?'Done ✓':'Not yet';audioBtn.textContent=s.audio?'Done ✓':'Not yet';weight.value=s.weight||'';sleep.value=s.sleep||'';progPos.textContent=posText();progType.textContent=proteinDay(i.day,i.date)?'Protein day':'Regular day';if(document.getElementById('progress').classList.contains('active'))renderCycle();if(document.getElementById('profile').classList.contains('active'))renderProfile();renderCoach()}
+start.value=new Date().toISOString().slice(0,10);if(s.member)sync();
+</script></body></html>
