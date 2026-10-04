@@ -1,11 +1,7 @@
 # CHANGELOG
 
-## Clean Test Build
-- Removed real member/admin sample data.
-- Added blank onboarding.
-- Water now starts at zero.
-- Added supplements at onboarding and coach follow-up tracking.
-- Added 42-day cycle/day calculations.
-- Added protein-day rules: Days 1–3 plus every Monday.
-- Added separate Member and Coach test entry points.
-- Added coach alerts for notes, B4B and incomplete check-ins.
+## Fixed Clean Test Build
+- Fixed Create Member on Safari/iPhone.
+- Renamed member name field to avoid `window.name` collision.
+- Replaced fragile implicit DOM globals with explicit element lookups.
+- Bumped service-worker cache.
