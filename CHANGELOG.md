@@ -1,7 +1,11 @@
 # CHANGELOG
 
-## Fixed Clean Test Build
-- Fixed Create Member on Safari/iPhone.
-- Renamed member name field to avoid `window.name` collision.
-- Replaced fragile implicit DOM globals with explicit element lookups.
-- Bumped service-worker cache.
+## Coach Expanded Test Build
+- Multi-client dashboard
+- Attention filters
+- Reply-to-member workflow
+- Conversation history
+- Private coach notes
+- Supplement follow-ups
+- Cycle/day view
+- Add test client button

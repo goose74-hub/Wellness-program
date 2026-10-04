@@ -1,3 +1,5 @@
-# Wellness Program — Fixed Clean Test Build
+# Wellness Program — Coach Expanded Test Build
 
-Fixes Safari onboarding/Create Member bug. Uses explicit element lookups rather than browser global IDs.
+Adds multi-client coach dashboard, filters, replies, conversation history, private coach notes, supplement follow-ups, cycle tracking, and test clients.
+
+Prototype only; data remains local to the browser/device.

@@ -54,19 +54,76 @@ input,textarea,select{width:100%;padding:10px;margin:5px 0 10px;border:1px solid
 <section id="squad" class="screen"><div class="card">Squad feed placeholder</div></section>
 <section id="profile" class="screen"><div class="card" id="profileCard"></div><h3>Supplements</h3><div class="card" id="profileSupplements"></div></section>
 
-<section id="coachHome" class="screen"><div class="grid"><div class="card"><div class="small">Clients</div><div class="metric" id="clientCount">0</div></div><div class="card"><div class="small">Needs attention</div><div class="metric" id="attentionCount">0</div></div></div><h3>Alerts</h3><div class="card" id="alertList"></div><h3>Clients</h3><div class="card" id="clientList"></div></section>
+<section id="coachHome" class="screen">
+<div class="grid">
+  <div class="card"><div class="small">Active clients</div><div class="metric" id="clientCount">0</div></div>
+  <div class="card"><div class="small">Needs attention</div><div class="metric" id="attentionCount">0</div></div>
+</div>
+<h3>Coach alerts</h3><div class="card" id="alertList">No alerts</div>
+<h3>Filter clients</h3>
+<div class="card">
+<select id="coachFilter" onchange="renderCoach()">
+<option value="all">All clients</option><option value="attention">Needs attention</option><option value="messages">New notes/messages</option><option value="b4b">B4B incomplete</option><option value="checkin">Check-in incomplete</option><option value="supplements">Supplement follow-up due</option>
+</select>
+</div>
+<h3>Clients</h3><div class="card" id="clientList">No clients yet</div>
+<button class="btn btn2" onclick="addDemoClient()">+ Add test client</button>
+</section>
 
-<section id="coachClient" class="screen"><div class="card"><div class="metric" id="coachClientName"></div><div class="small" id="coachClientPosition"></div></div><h3>Supplements</h3><div class="card" id="coachSupplements"></div><h3>Notes</h3><div class="card"><p id="coachMemberNote"></p></div></section>
+<section id="coachClient" class="screen">
+<div class="card"><div class="metric" id="coachClientName"></div><div class="small" id="coachClientPosition"></div></div>
+<div class="card"><div class="row">
+<button class="chip" onclick="showCoachTab('overview')">Overview</button>
+<button class="chip" onclick="showCoachTab('messages')">Messages</button>
+<button class="chip" onclick="showCoachTab('supplements')">Supplements</button>
+<button class="chip" onclick="showCoachTab('cycle')">Cycle</button>
+</div></div>
+
+<div id="coachOverviewTab">
+<h3>Today</h3><div class="grid">
+<div class="card"><div class="small">B4B</div><b id="coachB4B"></b></div>
+<div class="card"><div class="small">Water</div><b id="coachWater"></b></div>
+<div class="card"><div class="small">Carbs</div><b id="coachCarbs"></b></div>
+<div class="card"><div class="small">Protein</div><b id="coachProtein"></b></div>
+</div>
+<h3>Latest member note</h3><div class="card"><p id="coachMemberNote"></p><button class="btn btn2" onclick="showCoachTab('messages')">Reply to member</button></div>
+</div>
+
+<div id="coachMessagesTab" style="display:none">
+<h3>Conversation</h3><div class="card"><div id="conversationThread"></div><textarea id="coachReplyInput" placeholder="Reply to member"></textarea><button class="btn" onclick="sendCoachReply()">Send reply</button></div>
+<h3>Private coach note</h3><div class="card"><textarea id="coachPrivateNoteInput" placeholder="Private note — member cannot see this"></textarea><button class="btn btn2" onclick="savePrivateNote()">Save private note</button></div>
+</div>
+
+<div id="coachSupplementsTab" style="display:none"><h3>Supplements</h3><div class="card" id="coachSupplements"></div></div>
+<div id="coachCycleTab" style="display:none"><h3>Cycle position</h3><div class="card"><div class="metric" id="coachCyclePosition"></div><div class="small" id="coachCycleType"></div></div></div>
+</section>
 
 <nav id="memberNav" class="nav" style="display:none"><button onclick="showMember('home')">Home</button><button onclick="showMember('checkin')">Check-in</button><button onclick="showMember('progress')">Progress</button><button onclick="showMember('squad')">Squad</button><button onclick="showMember('profile')">Profile</button></nav>
 <nav id="coachNav" class="nav" style="display:none"><button onclick="showCoach('coachHome')">Dashboard</button><button onclick="openClient()">Client</button><button>Messages</button><button>Reports</button><button>Settings</button></nav>
 
 <script>
 const $=id=>document.getElementById(id);
-const DEFAULT={member:null,supplements:[],weight:null,sleep:null,water:0,steps:0,breakfast:false,breakfastSteps:null,foods:[],done:false};
+const DEFAULT={member:null,supplements:[],weight:null,sleep:null,water:0,steps:0,breakfast:false,breakfastSteps:null,foods:[],done:false,privateNote:'',conversation:[],suppFollowups:{}};
 let state=Object.assign({},DEFAULT,JSON.parse(localStorage.getItem('wellnessFixed2')||'{}'));
 let draftSupplements=[];
-function persist(){localStorage.setItem('wellnessFixed2',JSON.stringify(state))}
+let clients=JSON.parse(localStorage.getItem('wellnessCoachClients')||'[]');
+let activeClientIndex=0;
+
+function saveClients(){localStorage.setItem('wellnessCoachClients',JSON.stringify(clients))}
+function snapshotCurrentMember(){
+  if(!state.member)return null;
+  return {member:JSON.parse(JSON.stringify(state.member)),supplements:JSON.parse(JSON.stringify(state.supplements||[])),weight:state.weight,sleep:state.sleep,water:state.water,steps:state.steps,breakfast:state.breakfast,breakfastSteps:state.breakfastSteps,foods:JSON.parse(JSON.stringify(state.foods||[])),done:state.done,memberNote:localStorage.getItem('wellnessFixedNote')||'',privateNote:state.privateNote||'',conversation:state.conversation||[],suppFollowups:state.suppFollowups||{}};
+}
+function syncCurrentMemberToClients(){
+  if(!state.member)return;
+  const snap=snapshotCurrentMember();
+  const idx=clients.findIndex(c=>c.member&&c.member.name===state.member.name);
+  if(idx>=0)clients[idx]=snap; else clients.unshift(snap);
+  saveClients();
+}
+if(state.member&&clients.length===0){syncCurrentMemberToClients();}
+
+function persist(){localStorage.setItem('wellnessFixed2',JSON.stringify(state));syncCurrentMemberToClients()}
 function hideAll(){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'))}
 function memberEntry(){if(state.member){showMember('home');return}hideAll();$('onboard').classList.add('active');$('pageTitle').textContent='Onboarding'}
 function coachEntry(){showCoach('coachHome')}
@@ -88,10 +145,52 @@ function addSteps(x){if(state.breakfast)return;state.steps+=x;persist();renderAl
 function markBreakfast(){if(state.breakfast)return;state.breakfast=true;state.breakfastSteps=state.steps;persist();renderAll()}
 function addWater(x){state.water=+(state.water+x).toFixed(2);persist();renderAll()}
 function addFood(){const n=$('foodNameInput').value.trim();if(!n)return;state.foods.push({n,c:+$('foodCarbsInput').value||0,p:+$('foodProteinInput').value||0});$('foodNameInput').value='';$('foodCarbsInput').value='';$('foodProteinInput').value='';persist();renderAll()}
-function completeCheckin(){state.done=true;localStorage.setItem('wellnessFixedNote',$('coachNoteInput').value);persist();showMember('home')}
+function completeCheckin(){state.done=true;localStorage.setItem('wellnessFixedNote',$('coachNoteInput').value);state.conversation=state.conversation||[];persist();showMember('home')}
 function totals(){return state.foods.reduce((a,x)=>({c:a.c+x.c,p:a.p+x.p}),{c:0,p:0})}
-function renderCoach(){const note=localStorage.getItem('wellnessFixedNote')||'';let alerts=[];if(state.member){if(note)alerts.push('New note to coach');if(state.breakfast&&state.breakfastSteps<5000)alerts.push('B4B incomplete');if(!state.done)alerts.push('Check-in incomplete')}$('clientCount').textContent=state.member?1:0;$('attentionCount').textContent=alerts.length?1:0;$('alertList').innerHTML=alerts.length?alerts.map(x=>'<div class="row"><span>'+x+'</span><span class="tag">CHECK</span></div>').join(''):'No alerts';$('clientList').innerHTML=state.member?'<div class="row" onclick="openClient()"><div><b>'+state.member.name+'</b><div class="small">'+positionText()+'</div></div><span class="tag">'+(alerts.length?'CHECK':'ON TRACK')+'</span></div>':'No clients yet'}
-function openClient(){if(!state.member)return alert('Create a test member first');showCoach('coachClient');$('coachClientName').textContent=state.member.name;$('coachClientPosition').textContent=positionText();$('coachMemberNote').textContent=localStorage.getItem('wellnessFixedNote')||'No note yet';$('coachSupplements').innerHTML=state.supplements.length?state.supplements.map(x=>'<div class="row"><div><b>'+x.name+'</b><div class="small">'+(x.start||'')+(x.note?' · '+x.note:'')+'</div></div></div>').join(''):'No supplements'}
+function clientAlerts(c){
+ const alerts=[];
+ if(c.memberNote)alerts.push({type:'messages',text:'New note/message'});
+ if(c.breakfast&&c.breakfastSteps<5000)alerts.push({type:'b4b',text:'B4B incomplete'});
+ if(!c.done)alerts.push({type:'checkin',text:'Check-in incomplete'});
+ const today=new Date();
+ (c.supplements||[]).forEach((s,i)=>{if(!s.start)return;const sd=new Date(s.start+'T00:00:00');const days=Math.floor((today-sd)/86400000);const last=(c.suppFollowups||{})[i];if(days>=14&&!last)alerts.push({type:'supplements',text:'Supplement follow-up due: '+s.name});});
+ return alerts;
+}
+function clientCycleInfo(c){const st=new Date(c.member.start+'T00:00:00'),n=new Date();n.setHours(0,0,0,0);const d=Math.max(0,Math.floor((n-st)/86400000));return{cycle:Math.floor(d/42)+1,day:d%42+1,date:new Date(st.getTime()+d*86400000)}}
+function clientPosition(c){const i=clientCycleInfo(c);return'Cycle '+i.cycle+' · Day '+i.day}
+
+function renderCoach(){
+ syncCurrentMemberToClients();
+ $('clientCount').textContent=clients.length;
+ const withAlerts=clients.map((c,i)=>({c,i,alerts:clientAlerts(c)}));
+ $('attentionCount').textContent=withAlerts.filter(x=>x.alerts.length).length;
+ $('alertList').innerHTML=withAlerts.filter(x=>x.alerts.length).length?withAlerts.filter(x=>x.alerts.length).map(x=>'<div class="row" onclick="openClient('+x.i+')"><div><b>'+x.c.member.name+'</b><div class="small">'+x.alerts.map(a=>a.text).join(' · ')+'</div></div><span class="tag">CHECK</span></div>').join(''):'No alerts';
+ const filter=$('coachFilter')?$('coachFilter').value:'all';
+ const visible=withAlerts.filter(x=>filter==='all'||(filter==='attention'&&x.alerts.length)||x.alerts.some(a=>a.type===filter));
+ $('clientList').innerHTML=visible.length?visible.map(x=>'<div class="row" onclick="openClient('+x.i+')"><div><b>'+x.c.member.name+'</b><div class="small">'+clientPosition(x.c)+'</div></div><span class="tag">'+(x.alerts.length?'CHECK':'ON TRACK')+'</span></div>').join(''):'No clients match this filter';
+}
+
+function openClient(index){
+ if(typeof index==='number')activeClientIndex=index;
+ if(!clients.length){alert('Create a test member first');return;}
+ const c=clients[activeClientIndex]||clients[0];
+ showCoach('coachClient');
+ $('coachClientName').textContent=c.member.name;$('coachClientPosition').textContent=clientPosition(c);
+ const t=(c.foods||[]).reduce((a,x)=>({c:a.c+x.c,p:a.p+x.p}),{c:0,p:0});
+ $('coachB4B').textContent=c.breakfast?(c.breakfastSteps>=5000?'Complete ✓':'Incomplete'):'Pending';
+ $('coachWater').textContent=(c.water||0).toFixed(1)+' L';$('coachCarbs').textContent=t.c+' g';$('coachProtein').textContent=t.p+' g';
+ $('coachMemberNote').textContent=c.memberNote||'No note yet';$('coachPrivateNoteInput').value=c.privateNote||'';
+ const ci=clientCycleInfo(c);$('coachCyclePosition').textContent='Cycle '+ci.cycle+' · Day '+ci.day;$('coachCycleType').textContent=isProteinDay(ci.day,ci.date)?'Protein day':'Regular day';
+ renderConversation(c);renderCoachSupplements(c);showCoachTab('overview');
+}
+function showCoachTab(tab){$('coachOverviewTab').style.display=tab==='overview'?'block':'none';$('coachMessagesTab').style.display=tab==='messages'?'block':'none';$('coachSupplementsTab').style.display=tab==='supplements'?'block':'none';$('coachCycleTab').style.display=tab==='cycle'?'block':'none'}
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function renderConversation(c){const parts=[];if(c.memberNote)parts.push('<div class="row"><div><b>'+esc(c.member.name)+'</b><div class="small">Member note</div><p>'+esc(c.memberNote)+'</p></div></div>');(c.conversation||[]).forEach(m=>parts.push('<div class="row"><div><b>'+esc(m.from)+'</b><div class="small">'+esc(m.time)+'</div><p>'+esc(m.text)+'</p></div></div>'));$('conversationThread').innerHTML=parts.length?parts.join(''):'No conversation yet'}
+function sendCoachReply(){const txt=$('coachReplyInput').value.trim();if(!txt)return;const c=clients[activeClientIndex];c.conversation=c.conversation||[];c.conversation.push({from:'Coach',text:txt,time:new Date().toLocaleString('en-AU')});c.memberNote='';$('coachReplyInput').value='';saveClients();renderConversation(c);renderCoach()}
+function savePrivateNote(){const c=clients[activeClientIndex];c.privateNote=$('coachPrivateNoteInput').value;saveClients();alert('Private coach note saved')}
+function renderCoachSupplements(c){const f=c.suppFollowups||{};$('coachSupplements').innerHTML=(c.supplements||[]).length?(c.supplements||[]).map((s,i)=>'<div class="row"><div><b>'+esc(s.name)+'</b><div class="small">Started '+(s.start||'—')+(s.note?' · '+esc(s.note):'')+(f[i]?' · Last follow-up '+f[i]:'')+'</div></div><button class="chip" onclick="followUpSupplement('+i+')">Follow up</button></div>').join(''):'No supplements'}
+function followUpSupplement(i){const c=clients[activeClientIndex];c.suppFollowups=c.suppFollowups||{};c.suppFollowups[i]=new Date().toLocaleDateString('en-AU');saveClients();renderCoachSupplements(c);renderCoach()}
+function addDemoClient(){const n='Test Client '+(clients.length+1),st=new Date();st.setDate(st.getDate()-(clients.length*7+3));clients.push({member:{name:n,coach:'Test Coach',personality:'',start:st.toISOString().slice(0,10),startWeight:90,sixGoal:5,ultimate:80},supplements:[{name:'Omega',start:st.toISOString().slice(0,10),note:'Demo follow-up'}],weight:88,water:1.5,steps:3500,breakfast:true,breakfastSteps:3500,foods:[],done:false,memberNote:clients.length%2===0?'Feeling a bit flat today.':'',privateNote:'',conversation:[],suppFollowups:{}});saveClients();renderCoach()}
 function renderAll(){if(!state.member)return;const i=cycleInfo(),t=totals(),steps=state.breakfast?state.breakfastSteps:state.steps;$('positionText').textContent=positionText();$('proteinDayTag').style.display=isProteinDay(i.day,i.date)?'inline-flex':'none';$('homeWeight').textContent=state.weight?state.weight+' kg':'—';$('homeB4B').textContent=steps;$('homeWater').textContent=state.water.toFixed(1)+' L';$('checkWater').textContent=state.water.toFixed(1)+' L';$('homeCarbs').textContent=t.c+' g';$('checkB4B').textContent=steps+' / 5,000';$('foodList').innerHTML=state.foods.map(x=>'<div class="row"><span>'+x.n+'</span><span>'+x.c+'c · '+x.p+'p</span></div>').join('')||'No food logged';$('todayWeightInput').value=state.weight||'';$('todaySleepInput').value=state.sleep||'';$('progressPosition').textContent=positionText();$('progressType').textContent=isProteinDay(i.day,i.date)?'Protein day':'Regular day';$('profileCard').innerHTML='<div class="row"><span>Name</span><b>'+state.member.name+'</b></div><div class="row"><span>Coach</span><b>'+state.member.coach+'</b></div>';$('profileSupplements').innerHTML=state.supplements.map(x=>'<div class="row"><b>'+x.name+'</b><span>'+x.start+'</span></div>').join('')||'No supplements';renderCoach()}
 $('startDateInput').value=new Date().toISOString().slice(0,10);if(state.member)renderAll();
 </script></body></html>
